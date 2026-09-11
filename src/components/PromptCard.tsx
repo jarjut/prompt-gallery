@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { PromptItem } from "@/lib/db";
 import { SlidersHorizontal, Image as ImageIcon } from "lucide-react";
@@ -14,9 +15,15 @@ export function PromptCard({ prompt, onSelect }: PromptCardProps) {
   const primaryMedia = prompt.media_urls?.[0];
 
   return (
-    <article
-      onClick={() => onSelect(prompt)}
-      className="group relative flex flex-col bg-paper hairline-all transition-colors duration-fast hover:bg-paper-2 hover:border-ink cursor-pointer overflow-hidden"
+    <Link
+      href={`/prompts/${prompt.id}`}
+      onClick={(e) => {
+        if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+          e.preventDefault();
+          onSelect(prompt);
+        }
+      }}
+      className="group relative flex flex-col bg-paper hairline-all transition-colors duration-fast hover:bg-paper-2 hover:border-ink cursor-pointer overflow-hidden text-inherit no-underline"
     >
       {/* Thumbnail Container */}
       <div className="relative aspect-[4/3] w-full bg-paper-3 hairline-b overflow-hidden">
@@ -79,6 +86,6 @@ export function PromptCard({ prompt, onSelect }: PromptCardProps) {
           )}
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
