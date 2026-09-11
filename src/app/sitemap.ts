@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getDb } from "@/lib/db";
+import { getDb, getAllTags } from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yantraloka.com";
@@ -14,6 +14,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  const tags = getAllTags();
+  for (const tag of tags) {
+    entries.push({
+      url: `${baseUrl}/tag/${tag.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    });
+  }
   const rows = db
     .prepare(
       "SELECT id, created_at, source_published_at FROM prompts ORDER BY id ASC"

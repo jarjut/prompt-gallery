@@ -1,0 +1,47 @@
+# Yantraloka // AI Prompt Archive
+
+> Curated open archive of 15,600+ generative AI prompt formulas with taxonomy categorization and dynamic argument substitution for Midjourney, Stable Diffusion, Flux, and DALL-E.
+
+## Overview
+- Project Name: Yantraloka
+- Total Prompt Formulas: 15,601+
+- Dynamic Arguments: 16,045+
+- Curated Taxonomy Categories: 20
+- Website: https://yantraloka.com
+
+## Prompt Structure
+Prompts are structured instruction formulas for generative image models. Dynamic formulas contain editable token arguments formatted as:
+`{argument name="<argument_name>" default="<default_value>"}`
+
+When rendered for model execution, all argument placeholders are substituted with user-provided or default values to produce clean, unannotated prompt text.
+
+## Curated Taxonomy Categories
+Each taxonomy category groups prompt formulas by visual style and subject matter:
+
+- Portrait (2,400+ prompts): https://yantraloka.com/tag/portrait
+- Cinematic (2,100+ prompts): https://yantraloka.com/tag/cinematic
+- Photography (1,900+ prompts): https://yantraloka.com/tag/photography
+- Fashion & Editorial (1,400+ prompts): https://yantraloka.com/tag/fashion-editorial
+- Sci-Fi & Cyberpunk (1,200+ prompts): https://yantraloka.com/tag/sci-fi-cyberpunk
+- Illustration & Art (1,100+ prompts): https://yantraloka.com/tag/illustration-art
+- Fantasy & Mythology (1,000+ prompts): https://yantraloka.com/tag/fantasy-mythology
+- Product & Commercial (900+ prompts): https://yantraloka.com/tag/product-commercial
+- 3D & CGI (900+ prompts): https://yantraloka.com/tag/3d-cgi
+- Dark & Moody (800+ prompts): https://yantraloka.com/tag/dark-moody
+- Anime & Manga (700+ prompts): https://yantraloka.com/tag/anime-manga
+- Architecture & Interior (700+ prompts): https://yantraloka.com/tag/architecture-interior
+- Nature & Landscape (700+ prompts): https://yantraloka.com/tag/nature-landscape
+- Studio Lighting (600+ prompts): https://yantraloka.com/tag/studio-lighting
+- Retro & Vintage (600+ prompts): https://yantraloka.com/tag/retro-vintage
+- Vibrant & Colorful (500+ prompts): https://yantraloka.com/tag/vibrant-colorful
+- Lifestyle & Candid (500+ prompts): https://yantraloka.com/tag/lifestyle-candid
+- Typography & Poster (400+ prompts): https://yantraloka.com/tag/typography-poster
+- Macro & Close-up (300+ prompts): https://yantraloka.com/tag/macro-close-up
+- Minimalist (300+ prompts): https://yantraloka.com/tag/minimalist
+
+## Machine-Readable Endpoints
+- Robots Policy: https://yantraloka.com/robots.txt
+- XML Sitemap: https://yantraloka.com/sitemap.xml
+- Single Prompt JSON: https://yantraloka.com/api/prompts/{id}
+- Filtered Prompts Search: https://yantraloka.com/api/prompts?q={query}&tag={slug}&page={page}
+- Taxonomy Tags JSON: https://yantraloka.com/api/tags
