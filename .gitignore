@@ -1,0 +1,25 @@
+# ponytail: basic root ignore list; upgrade when specific runtime or build artifacts are added.
+.scratch/
+
+# Environments and local overrides
+.env
+.env.local
+.env.*.local
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and runtime
+*.log
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
