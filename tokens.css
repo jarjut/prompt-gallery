@@ -1,0 +1,69 @@
+/* Hallmark · macrostructure: Catalogue · theme: Grid · anchor hue: signal-red */
+
+:root {
+  /* Hallmark OKLCH Color Palette (Theme: Grid) */
+  --color-paper: oklch(98.5% 0.003 255);
+  --color-paper-2: oklch(96% 0.006 255);
+  --color-paper-3: oklch(93% 0.010 255);
+  --color-ink: oklch(16% 0.010 255);
+  --color-ink-secondary: oklch(34% 0.015 255);
+  --color-muted: oklch(50% 0.012 255);
+  --color-rule: oklch(88% 0.008 255);
+  --color-rule-dark: oklch(75% 0.015 255);
+  --color-accent: oklch(55% 0.21 28);
+  --color-accent-hover: oklch(50% 0.22 28);
+  --color-accent-ink: oklch(98.5% 0.003 255);
+  --color-focus: oklch(55% 0.21 28);
+
+  /* Typography */
+  --font-display: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --display-weight: 800;
+  --tracking-display: -0.04em;
+  --tracking-caps: 0.08em;
+
+  /* 4pt Spacing Scale */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+
+  /* Geometry & Rules */
+  --radius-card: 0px;
+  --radius-pill: 9999px;
+  --radius-token: 2px;
+  --shadow-card: none;
+
+  /* Microinteraction Easings */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-normal: 220ms;
+}
+
+html, body {
+  overflow-x: clip;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition-duration: 0.01ms !important; animation: none !important; }
+}

@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "../../tokens.css";
+
+/* Hallmark Grid Theme Global Utility Classes */
+
+.hairline-b {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.hairline-t {
+  border-top: 1px solid var(--color-rule);
+}
+
+.hairline-r {
+  border-right: 1px solid var(--color-rule);
+}
+
+.hairline-l {
+  border-left: 1px solid var(--color-rule);
+}
+
+.hairline-all {
+  border: 1px solid var(--color-rule);
+}
+
+/* Subtle architectural dot lattice for empty image states */
+.dot-grid {
+  background-image: radial-gradient(var(--color-rule-dark) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Inline token editing */
+.inline-token-input {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 3px;
+  padding: 1px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--color-ink);
+  background-color: var(--color-paper-3);
+  border: 1px solid var(--color-rule-dark);
+  border-radius: var(--radius-token);
+  transition: all var(--dur-fast) var(--ease-out);
+  outline: none;
+  min-width: 60px;
+}
+
+.inline-token-input:hover {
+  border-color: var(--color-ink-secondary);
+  background-color: var(--color-paper);
+}
+
+.inline-token-input:focus {
+  border-color: var(--color-accent);
+  background-color: var(--color-paper);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
