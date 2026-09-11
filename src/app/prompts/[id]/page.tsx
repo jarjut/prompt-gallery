@@ -10,8 +10,8 @@ import {
   Calendar,
   User,
   Tag as TagIcon,
-  Image as ImageIcon,
 } from "lucide-react";
+import { MediaGallery } from "@/components/MediaGallery";
 
 interface PromptPageProps {
   params: Promise<{ id: string }>;
@@ -198,15 +198,7 @@ export default async function PromptDetailPage({ params }: PromptPageProps) {
           {/* Visual Preview Column (if present) */}
           {primaryMedia && (
             <div className="lg:col-span-5 flex flex-col gap-3">
-              <div className="relative aspect-[4/3] w-full bg-paper-3 hairline-all overflow-hidden">
-                <img
-                  src={primaryMedia}
-                  alt={prompt.title}
-                  loading="eager"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-top"
-                />
-              </div>
+              <MediaGallery mediaUrls={prompt.media_urls} title={prompt.title} />
               <div className="text-[11px] font-mono text-muted text-center">
                 Visual generation preview from source
               </div>

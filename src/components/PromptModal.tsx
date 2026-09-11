@@ -9,10 +9,10 @@ import {
   RotateCcw,
   ExternalLink,
   SlidersHorizontal,
-  Image as ImageIcon,
   Code2,
 } from "lucide-react";
 
+import { MediaGallery } from "@/components/MediaGallery";
 interface PromptModalProps {
   prompt: PromptItem | null;
   onClose: () => void;
@@ -31,7 +31,6 @@ export function PromptModal({ prompt, onClose }: PromptModalProps) {
   const [argValues, setArgValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
-  const [imageError, setImageError] = useState(false);
 
   // Close on Escape
   useEffect(() => {
@@ -102,7 +101,6 @@ export function PromptModal({ prompt, onClose }: PromptModalProps) {
     setArgValues(initialDefaults);
     setCopied(false);
     setShowRaw(false);
-    setImageError(false);
   }, [initialDefaults]);
 
   // Update argument value across all synchronized instances
@@ -190,23 +188,8 @@ export function PromptModal({ prompt, onClose }: PromptModalProps) {
         <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12">
           {/* Left Column: Media & Metadata (4 cols on lg) */}
           <div className="lg:col-span-4 p-4 sm:p-6 bg-paper-2 hairline-b lg:hairline-b-0 lg:hairline-r flex flex-col gap-4">
-            {/* Image Preview */}
-            <div className="aspect-[4/3] w-full bg-paper hairline-all overflow-hidden relative">
-              {primaryMedia && !imageError ? (
-                <img
-                  src={primaryMedia}
-                  alt={prompt.title}
-                  referrerPolicy="no-referrer"
-                  onError={() => setImageError(true)}
-                  className="w-full h-full object-cover object-top"
-                />
-              ) : (
-                <div className="w-full h-full dot-grid flex flex-col items-center justify-center text-muted p-4">
-                  <ImageIcon className="w-10 h-10 stroke-1 opacity-50 mb-2" />
-                  <span className="font-mono text-xs uppercase tracking-wider">No Image Preview</span>
-                </div>
-              )}
-            </div>
+            {/* Media Gallery with Proportioned Preview & Lightbox */}
+            <MediaGallery mediaUrls={prompt.media_urls} title={prompt.title} />
 
             {/* Metadata Spec Sheet */}
             <div className="space-y-3 font-mono text-xs">

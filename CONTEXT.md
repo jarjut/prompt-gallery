@@ -34,3 +34,11 @@ _Avoid_: Form value, input state
 **Modal Viewer**:
 Dialog overlay untuk menampilkan detail Prompt, menyunting Argument secara inline, dan menyalin Rendered Prompt ke clipboard.
 _Avoid_: Detail page, popup, prompt drawer
+
+**Media Preview**:
+Frame visual dalam Modal Viewer atau halaman detail Prompt yang menampilkan aset gambar terpilih secara proporsional tanpa pemotongan (un-cropped).
+_Avoid_: Thumbnail box, image box, picture preview
+
+**Media Lightbox**:
+Overlay layar penuh untuk inspeksi resolusi penuh aset gambar dengan navigasi antar-aset dan penutupan interaktif.
+_Avoid_: Image previewer, image popup, zoom modal
