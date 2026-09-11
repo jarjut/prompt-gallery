@@ -15,6 +15,9 @@ const nextConfig = {
       },
     ],
   },
+  outputFileTracingIncludes: {
+    "/**": ["./data.db"],
+  },
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
