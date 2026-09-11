@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useCallback, useTransition, useRef } from "react";
 import type { PromptItem, Tag, SearchResult } from "@/lib/db";
 import { FilterBar } from "@/components/FilterBar";
 import { PromptCard } from "@/components/PromptCard";
@@ -10,23 +10,57 @@ import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 interface GalleryViewProps {
   initialData: SearchResult;
   tags: Tag[];
+  initialTag?: string;
+  initialQuery?: string;
+  initialPage?: number;
+  initialPrompt?: PromptItem | null;
 }
 
-export function GalleryView({ initialData, tags }: GalleryViewProps) {
+export function GalleryView({
+  initialData,
+  tags,
+  initialTag = "",
+  initialQuery = "",
+  initialPage = 1,
+  initialPrompt = null,
+}: GalleryViewProps) {
   const [prompts, setPrompts] = useState<PromptItem[]>(initialData.prompts);
   const [totalResults, setTotalResults] = useState(initialData.total);
   const [totalPages, setTotalPages] = useState(initialData.totalPages);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
 
-  const [selectedTag, setSelectedTag] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
+  const [selectedTag, setSelectedTag] = useState(initialTag);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(initialPrompt);
 
   const [isPending, startTransition] = useTransition();
 
-  // Debounced search & filter fetcher
+  const activeTagRef = useRef(initialTag);
+  const activeQueryRef = useRef(initialQuery);
+  const activePageRef = useRef(initialPage);
+  const promptsRef = useRef(prompts);
+  promptsRef.current = prompts;
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const lastFetchedKeyRef = useRef(`${initialTag}|${initialQuery.trim()}|${initialPage}`);
+
+  const getUrl = useCallback(
+    (tag: string, query: string, page: number, promptId?: number | null) => {
+      const params = new URLSearchParams();
+      if (tag) params.set("tag", tag);
+      if (query.trim()) params.set("q", query.trim());
+      if (page > 1) params.set("page", page.toString());
+      if (promptId) params.set("prompt", promptId.toString());
+      const qs = params.toString();
+      return qs ? `/?${qs}` : "/";
+    },
+    []
+  );
+
   const fetchFilteredPrompts = useCallback(
     async (page: number, query: string, tag: string) => {
+      const fetchKey = `${tag}|${query.trim()}|${page}`;
+      lastFetchedKeyRef.current = fetchKey;
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "24",
@@ -38,10 +72,13 @@ export function GalleryView({ initialData, tags }: GalleryViewProps) {
         const res = await fetch(`/api/prompts?${params.toString()}`);
         if (!res.ok) throw new Error("Failed to fetch prompts");
         const data: SearchResult = await res.json();
-        setPrompts(data.prompts);
-        setTotalResults(data.total);
-        setTotalPages(data.totalPages);
-        setCurrentPage(data.page);
+        if (lastFetchedKeyRef.current === fetchKey) {
+          setPrompts(data.prompts);
+          setTotalResults(data.total);
+          setTotalPages(data.totalPages);
+          setCurrentPage(data.page);
+          activePageRef.current = data.page;
+        }
       } catch (err) {
         console.error("Error fetching prompts:", err);
       }
@@ -49,25 +86,268 @@ export function GalleryView({ initialData, tags }: GalleryViewProps) {
     []
   );
 
-  // Trigger search on filter changes
+  const fetchPromptDetail = useCallback(async (id: number) => {
+    try {
+      const res = await fetch(`/api/prompts/${id}`);
+      if (res.ok) {
+        const data: PromptItem = await res.json();
+        setSelectedPrompt(data);
+      } else if (res.status === 404) {
+        const params = new URLSearchParams(window.location.search);
+        params.delete("prompt");
+        const qs = params.toString();
+        window.history.replaceState(null, "", qs ? `/?${qs}` : "/");
+        setSelectedPrompt(null);
+      }
+    } catch (err) {
+      console.error("Error fetching prompt detail:", err);
+    }
+  }, []);
+
+  // History Priming on cold-load with ?prompt=
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (typeof window === "undefined") return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptIdParam = urlParams.get("prompt");
+
+    if (promptIdParam && !window.history.state?.__primed) {
+      const baseParams = new URLSearchParams(window.location.search);
+      baseParams.delete("prompt");
+      const baseQs = baseParams.toString();
+      const baseUrl = baseQs ? `/?${baseQs}` : "/";
+      const fullUrl = window.location.pathname + window.location.search;
+
+      window.history.replaceState({ __primed: true, prompt: null }, "", baseUrl);
+      window.history.pushState(
+        { __primed: true, prompt: Number(promptIdParam) },
+        "",
+        fullUrl
+      );
+    }
+
+    if (promptIdParam && !selectedPrompt) {
+      const pId = Number(promptIdParam);
+      if (!isNaN(pId)) {
+        const found = initialData.prompts.find((p) => p.id === pId);
+        if (found) {
+          setSelectedPrompt(found);
+        } else {
+          fetchPromptDetail(pId);
+        }
+      }
+    }
+  }, [initialData.prompts, selectedPrompt, fetchPromptDetail]);
+
+  // Popstate listener (Back / Forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tagParam = params.get("tag") || "";
+      const queryParam = params.get("q") || "";
+      const pageParam = Math.max(1, parseInt(params.get("page") || "1", 10));
+      const promptParam = params.get("prompt");
+
+      // 1. Sync Modal
+      if (!promptParam) {
+        setSelectedPrompt(null);
+      } else {
+        const pId = Number(promptParam);
+        if (!isNaN(pId)) {
+          setSelectedPrompt((current) => {
+            if (current?.id === pId) return current;
+            const found = promptsRef.current.find((p) => p.id === pId);
+            if (found) return found;
+            fetchPromptDetail(pId);
+            return current;
+          });
+        }
+      }
+
+      // 2. Sync Filters
+      const filtersChanged =
+        tagParam !== activeTagRef.current ||
+        queryParam !== activeQueryRef.current ||
+        pageParam !== activePageRef.current;
+
+      if (filtersChanged) {
+        activeTagRef.current = tagParam;
+        activeQueryRef.current = queryParam;
+        activePageRef.current = pageParam;
+
+        setSelectedTag(tagParam);
+        setSearchQuery(queryParam);
+        setCurrentPage(pageParam);
+
+        startTransition(() => {
+          fetchFilteredPrompts(pageParam, queryParam, tagParam);
+        });
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [fetchFilteredPrompts, fetchPromptDetail]);
+
+  const handleSearchChange = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+
+      clearTimeout(debounceTimerRef.current);
+
+      if (query === "") {
+        activeQueryRef.current = "";
+        activePageRef.current = 1;
+        setCurrentPage(1);
+
+        startTransition(() => {
+          fetchFilteredPrompts(1, "", activeTagRef.current);
+        });
+
+        const newUrl = getUrl(activeTagRef.current, "", 1, selectedPrompt?.id);
+        window.history.replaceState(
+          { __primed: true, prompt: selectedPrompt?.id ?? null },
+          "",
+          newUrl
+        );
+        return;
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        activeQueryRef.current = query;
+        activePageRef.current = 1;
+        setCurrentPage(1);
+
+        startTransition(() => {
+          fetchFilteredPrompts(1, query, activeTagRef.current);
+        });
+
+        const newUrl = getUrl(activeTagRef.current, query, 1, selectedPrompt?.id);
+        window.history.replaceState(
+          { __primed: true, prompt: selectedPrompt?.id ?? null },
+          "",
+          newUrl
+        );
+      }, 250);
+    },
+    [fetchFilteredPrompts, getUrl, selectedPrompt]
+  );
+
+  const handleSearchSubmit = useCallback(
+    (query: string) => {
+      clearTimeout(debounceTimerRef.current);
+
+      activeQueryRef.current = query;
+      activePageRef.current = 1;
+      setCurrentPage(1);
+
       startTransition(() => {
-        fetchFilteredPrompts(1, searchQuery, selectedTag);
+        fetchFilteredPrompts(1, query, activeTagRef.current);
       });
-    }, 200);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedTag, fetchFilteredPrompts]);
+      const newUrl = getUrl(activeTagRef.current, query, 1, selectedPrompt?.id);
+      window.history.pushState(
+        { __primed: true, prompt: selectedPrompt?.id ?? null },
+        "",
+        newUrl
+      );
+    },
+    [fetchFilteredPrompts, getUrl, selectedPrompt]
+  );
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
+  const handleTagChange = useCallback(
+    (tag: string) => {
+      activeTagRef.current = tag;
+      activePageRef.current = 1;
+      setSelectedTag(tag);
+      setCurrentPage(1);
+
+      startTransition(() => {
+        fetchFilteredPrompts(1, activeQueryRef.current, tag);
+      });
+
+      const newUrl = getUrl(tag, activeQueryRef.current, 1, selectedPrompt?.id);
+      window.history.pushState(
+        { __primed: true, prompt: selectedPrompt?.id ?? null },
+        "",
+        newUrl
+      );
+    },
+    [fetchFilteredPrompts, getUrl, selectedPrompt]
+  );
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (newPage < 1 || newPage > totalPages) return;
+      activePageRef.current = newPage;
+      setCurrentPage(newPage);
+
+      startTransition(() => {
+        fetchFilteredPrompts(newPage, activeQueryRef.current, activeTagRef.current);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      const newUrl = getUrl(
+        activeTagRef.current,
+        activeQueryRef.current,
+        newPage,
+        selectedPrompt?.id
+      );
+      window.history.pushState(
+        { __primed: true, prompt: selectedPrompt?.id ?? null },
+        "",
+        newUrl
+      );
+    },
+    [totalPages, fetchFilteredPrompts, getUrl, selectedPrompt]
+  );
+
+  const handleSelectPrompt = useCallback(
+    (prompt: PromptItem) => {
+      setSelectedPrompt(prompt);
+      const newUrl = getUrl(
+        activeTagRef.current,
+        activeQueryRef.current,
+        activePageRef.current,
+        prompt.id
+      );
+      window.history.pushState(
+        { __primed: true, prompt: prompt.id },
+        "",
+        newUrl
+      );
+    },
+    [getUrl]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("prompt")) {
+      window.history.back();
+    } else {
+      setSelectedPrompt(null);
+    }
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    activeTagRef.current = "";
+    activeQueryRef.current = "";
+    activePageRef.current = 1;
+    setSelectedTag("");
+    setSearchQuery("");
+    setCurrentPage(1);
+
     startTransition(() => {
-      fetchFilteredPrompts(newPage, searchQuery, selectedTag);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      fetchFilteredPrompts(1, "", "");
     });
-  };
 
+    const newUrl = getUrl("", "", 1, selectedPrompt?.id);
+    window.history.pushState(
+      { __primed: true, prompt: selectedPrompt?.id ?? null },
+      "",
+      newUrl
+    );
+  }, [fetchFilteredPrompts, getUrl, selectedPrompt]);
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       {/* Sticky Header & Taxonomy Filter */}
@@ -76,8 +356,9 @@ export function GalleryView({ initialData, tags }: GalleryViewProps) {
         selectedTag={selectedTag}
         searchQuery={searchQuery}
         totalResults={totalResults}
-        onTagChange={(tag) => setSelectedTag(tag)}
-        onSearchChange={(q) => setSearchQuery(q)}
+        onTagChange={handleTagChange}
+        onSearchChange={handleSearchChange}
+        onSearchSubmit={handleSearchSubmit}
       />
 
       {/* Main Grid Content */}
@@ -112,7 +393,7 @@ export function GalleryView({ initialData, tags }: GalleryViewProps) {
               <PromptCard
                 key={prompt.id}
                 prompt={prompt}
-                onSelect={(p) => setSelectedPrompt(p)}
+                onSelect={handleSelectPrompt}
               />
             ))}
           </div>
@@ -123,11 +404,7 @@ export function GalleryView({ initialData, tags }: GalleryViewProps) {
               Try adjusting your search terms or clearing selected tag filters.
             </p>
             <button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedTag("");
-              }}
-              className="mt-4 px-4 py-2 bg-ink text-paper font-mono text-xs hover:bg-accent transition-colors"
+              onClick={handleResetFilters}
             >
               Reset All Filters
             </button>
@@ -184,7 +461,7 @@ export function GalleryView({ initialData, tags }: GalleryViewProps) {
       {/* Interactive Prompt Modal Dialog */}
       <PromptModal
         prompt={selectedPrompt}
-        onClose={() => setSelectedPrompt(null)}
+        onClose={handleCloseModal}
       />
     </div>
   );

@@ -1,11 +1,36 @@
-import { getAllTags, searchPrompts } from "@/lib/db";
+import { getAllTags, searchPrompts, getPromptById } from "@/lib/db";
 import { GalleryView } from "@/components/GalleryView";
 
 export const dynamic = "force-dynamic";
 
-export default function HomePage() {
-  const tags = getAllTags();
-  const initialData = searchPrompts({ page: 1, limit: 24 });
+interface HomePageProps {
+  searchParams: Promise<{
+    tag?: string;
+    q?: string;
+    page?: string;
+    prompt?: string;
+  }>;
+}
 
-  return <GalleryView initialData={initialData} tags={tags} />;
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  const tag = params.tag || "";
+  const q = params.q || "";
+  const page = Math.max(1, parseInt(params.page || "1", 10));
+  const promptId = params.prompt ? Number(params.prompt) : null;
+
+  const tags = getAllTags();
+  const initialData = searchPrompts({ page, limit: 24, query: q, tag });
+  const initialPrompt = promptId && !isNaN(promptId) ? getPromptById(promptId) : null;
+
+  return (
+    <GalleryView
+      initialData={initialData}
+      tags={tags}
+      initialTag={tag}
+      initialQuery={q}
+      initialPage={page}
+      initialPrompt={initialPrompt}
+    />
+  );
 }

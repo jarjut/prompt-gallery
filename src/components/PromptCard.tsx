@@ -8,15 +8,16 @@ import { SlidersHorizontal, Image as ImageIcon } from "lucide-react";
 interface PromptCardProps {
   prompt: PromptItem;
   onSelect?: (prompt: PromptItem) => void;
+  href?: string;
 }
 
-export function PromptCard({ prompt, onSelect }: PromptCardProps) {
+export function PromptCard({ prompt, onSelect, href }: PromptCardProps) {
   const [imageError, setImageError] = useState(false);
   const primaryMedia = prompt.media_urls?.[0];
 
   return (
     <Link
-      href={`/prompts/${prompt.id}`}
+      href={href || `/?prompt=${prompt.id}`}
       onClick={(e) => {
         if (onSelect && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
           e.preventDefault();

@@ -11,6 +11,7 @@ interface FilterBarProps {
   totalResults: number;
   onTagChange: (tag: string) => void;
   onSearchChange: (query: string) => void;
+  onSearchSubmit?: (query: string) => void;
 }
 
 export function FilterBar({
@@ -20,6 +21,7 @@ export function FilterBar({
   totalResults,
   onTagChange,
   onSearchChange,
+  onSearchSubmit,
 }: FilterBarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,6 +63,12 @@ export function FilterBar({
               placeholder="Search prompts... (Press '/' to focus)"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onSearchSubmit?.(searchQuery);
+                }
+              }}
               className="w-full pl-9 pr-8 py-2 bg-paper-2 hairline-all font-body text-sm text-ink placeholder:text-muted placeholder:font-mono placeholder:text-xs outline-none focus:bg-paper focus:border-accent transition-colors"
             />
             {searchQuery && (
